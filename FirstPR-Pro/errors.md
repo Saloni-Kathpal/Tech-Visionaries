@@ -59,3 +59,21 @@ The system does not provide any suggestions while the user types skills. Users m
 - Implement dynamic skill suggestion (autocomplete) feature
 - Provide a predefined list of common technical skills
 - Allow multi-skill selection with guided input
+## 🔴 Problem 4: No Skill-Level Based Filtering (Beginner vs Advanced)
+
+### Issue:
+The system does not differentiate between user experience levels. Beginners are shown high-complexity issues that may not be suitable for their skill level.
+
+### Impact:
+- Beginners may feel overwhelmed  
+- Reduced chances of successful contribution  
+- Poor onboarding experience for new users  
+
+### Cause:
+- No user proficiency level input (e.g., beginner, intermediate)  
+- Ranking system does not consider difficulty of issues  
+
+### Suggested Fix:
+- Add user level selection (Beginner / Intermediate / Advanced)  
+- Prioritize “good first issue” and low-complexity issues for beginners  
+- Adjust scoring algorithm based on user experience level  
