@@ -162,16 +162,19 @@ def generate_ai_recommendations(skills, repos):
         
         # Fuzzy matching key from LLM to original list
         matched_url = "#"
+        matched_score = 0
         for repo in repos:
             original_name = repo.get('repo', repo.get('title', 'Unknown'))
             if target_name in original_name.lower() or original_name.lower() in target_name:
                 matched_url = repo.get('url', repo.get('html_url', '#'))
+                matched_score = repo.get('score', 0)
                 item['name'] = original_name # restore original casing
                 item['title'] = original_name
                 item['repo'] = repo.get('repo', original_name)
                 break
                 
         item['url'] = matched_url
+        item['score'] = matched_score
         item['is_ai_recommended'] = True
         enriched_results.append(item)
         
