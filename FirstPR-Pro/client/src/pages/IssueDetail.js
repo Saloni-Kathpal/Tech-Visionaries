@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 const IssueDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth() || {};
+  const { user, avatar } = useAuth() || {};
   const [issue, setIssue] = useState(null);
   
   // Submit phase
@@ -31,7 +31,7 @@ const IssueDetail = () => {
   const handleClaim = async () => {
     if (!user) return alert("Login to claim issues");
     try {
-      const res = await fetch(`http://localhost:8000/marketplace/issues/${id}/claim?username=${encodeURIComponent(user)}`, {
+      const res = await fetch(`http://localhost:8000/marketplace/issues/${id}/claim?username=${encodeURIComponent(user)}&avatar_url=${encodeURIComponent(avatar || '')}`, {
         method: 'POST'
       });
       if (res.ok) fetchIssue();
@@ -45,7 +45,7 @@ const IssueDetail = () => {
     e.preventDefault();
     if (!user) return;
     try {
-      const res = await fetch(`http://localhost:8000/marketplace/issues/${id}/submit?username=${encodeURIComponent(user)}`, {
+      const res = await fetch(`http://localhost:8000/marketplace/issues/${id}/submit?username=${encodeURIComponent(user)}&avatar_url=${encodeURIComponent(avatar || '')}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ solution })
@@ -53,7 +53,10 @@ const IssueDetail = () => {
       if (res.ok) {
         alert("Solution submitted!");
         fetchIssue();
-      } else alert(await res.text());
+      } else {
+        const errorText = await res.text();
+        alert(`Failed to submit solution: ${errorText || res.statusText}`);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -91,11 +94,16 @@ const IssueDetail = () => {
           
           <div className="terminal c-cut" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h1 style={{ color: 'var(--text)', margin: '0 0 1rem 0' }}>{issue.title}</h1>
-                <div className="issue-labels" style={{ marginBottom: '2rem' }}>
-                  <span className="label bug">{issue.status}</span>
-                  <span className="label good-first-issue">{issue.difficulty}</span>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                {issue.creator && issue.creator.avatar_url && (
+                  <img src={issue.creator.avatar_url} alt="" style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid var(--accent-green)' }} />
+                )}
+                <div>
+                  <h1 style={{ color: 'var(--text)', margin: '0 0 1rem 0' }}>{issue.title}</h1>
+                  <div className="issue-labels" style={{ marginBottom: '2rem' }}>
+                    <span className="label bug">{issue.status}</span>
+                    <span className="label good-first-issue">{issue.difficulty}</span>
+                  </div>
                 </div>
               </div>
               <a 
@@ -127,9 +135,9 @@ const IssueDetail = () => {
                 <h3 style={{ color: 'var(--accent-cyan)' }}>Submit Solution</h3>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                   <input
-                    type="url"
+                    type="text"
                     required
-                    placeholder="Link to your PR"
+                    placeholder="Link to your PR (e.g. https://github.com/user/repo/pull/1)"
                     className="cyber-input"
                     value={solution}
                     onChange={e => setSolution(e.target.value)}
@@ -144,6 +152,12 @@ const IssueDetail = () => {
                 <h3 style={{ color: 'var(--text)', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Submissions</h3>
                 {submissions.map(sub => (
                   <div key={sub.id} style={{ background: 'var(--bg-card)', padding: '1rem', marginTop: '1rem', borderRadius: '4px', borderLeft: '3px solid var(--accent-pink)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                      {sub.solver && sub.solver.avatar_url && (
+                        <img src={sub.solver.avatar_url} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--accent-pink)' }} />
+                      )}
+                      <strong style={{ color: 'var(--accent-pink)' }}>{sub.solver ? sub.solver.name : 'Unknown Hacker'}</strong>
+                    </div>
                     <p style={{ margin: '0 0 1rem 0' }}><strong>Link:</strong> <a href={sub.solution} target="_blank" rel="noreferrer" style={{color: 'var(--accent-cyan)'}}>{sub.solution}</a></p>
                     
                     {issue.status === 'in-progress' && isCreator && (

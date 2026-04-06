@@ -888,6 +888,29 @@ section {
 
 .cyber-input::placeholder { color: var(--muted); }
 
+/* Style native select dropdowns with dark theme */
+select.cyber-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 0.6rem 2rem 0.6rem 0.8rem;
+  border-radius: 2px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ff88' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+select.cyber-input option {
+  background: #0d1117;
+  color: #e2e8f0;
+}
+select.cyber-input:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 1px var(--accent-green);
+}
+
 .cyber-submit {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;

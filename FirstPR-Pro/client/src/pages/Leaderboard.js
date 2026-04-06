@@ -76,7 +76,12 @@ const Leaderboard = () => {
                           0{idx + 1}
                         </td>
                         <td style={{ padding: '1.2rem', color: 'var(--accent-cyan)' }}>
-                          [{user.name}]
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {user.avatar_url && (
+                              <img src={user.avatar_url} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--accent-green)' }} />
+                            )}
+                            [{user.name}]
+                          </div>
                         </td>
                         <td style={{ padding: '1.2rem', color: 'var(--text)', fontWeight: 'bold' }}>
                           {user.score.toFixed(1)}

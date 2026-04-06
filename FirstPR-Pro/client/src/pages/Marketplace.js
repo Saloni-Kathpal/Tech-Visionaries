@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import GithubLoginModal from '../components/GithubLoginModal';
 import { useAuth } from '../AuthContext';
 
 const Marketplace = () => {
-  const { user } = useAuth() || {};
+  const { user, avatar, login } = useAuth() || {};
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [issues, setIssues] = useState([]);
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -46,7 +48,7 @@ const Marketplace = () => {
       const res = await fetch('http://localhost:8000/marketplace/issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, creator_name: user })
+        body: JSON.stringify({ ...formData, creator_name: user, creator_avatar: avatar })
       });
       if (res.ok) {
         alert("Issue posted successfully!");
@@ -54,7 +56,8 @@ const Marketplace = () => {
         setFormData({ title: '', description: '', repo_link: '', difficulty: 'Easy' });
         fetchIssues();
       } else {
-        alert("Failed to post issue.");
+        const errorText = await res.text();
+        alert(`Failed to post issue: ${errorText || res.statusText}`);
       }
     } catch (err) {
       console.error(err);
@@ -63,6 +66,7 @@ const Marketplace = () => {
 
   return (
     <>
+      {showLoginModal && <GithubLoginModal onClose={() => setShowLoginModal(false)} />}
       <div className="ambient-glow ambient-glow-1" />
       <div className="ambient-glow ambient-glow-2" />
       <Navbar isDashboard={true} />
@@ -86,7 +90,12 @@ const Marketplace = () => {
                 {showForm ? 'Cancel' : '+ Post Issue'}
               </button>
             ) : (
-              <span className="accent-cyan" style={{fontSize: '0.9rem'}}>Login to post issues</span>
+              <button
+                className="btn-neon btn-outline"
+                onClick={() => setShowLoginModal(true)}
+              >
+                {'>'} Login to Post Issues
+              </button>
             )}
           </div>
 
@@ -117,8 +126,8 @@ const Marketplace = () => {
                     required
                   />
                   <input 
-                    type="url" 
-                    placeholder="Repository URL" 
+                    type="text" 
+                    placeholder="Repository URL (e.g. https://github.com/user/repo)" 
                     className="cyber-input"
                     value={formData.repo_link}
                     onChange={(e) => setFormData({...formData, repo_link: e.target.value})}
@@ -136,7 +145,7 @@ const Marketplace = () => {
                   </select>
                   
                   <button type="submit" className="cyber-submit" style={{ alignSelf: 'flex-start', marginTop: '1rem' }}>
-                    > SUBMIT_ISSUE
+                    {'>'} SUBMIT_ISSUE
                   </button>
                 </form>
               </div>
@@ -181,8 +190,16 @@ const Marketplace = () => {
                   </div>
                   <h3 className="issue-title" style={{ marginTop: '1rem' }}>{issue.title}</h3>
                   <div className="repo-info">
-                    <span className="repo-icon">⭐</span>
-                    {"Posted by " + issue.created_by_id} {/* Ideally we return creator.name but ID is fine for MVP */}
+                    {issue.creator && issue.creator.avatar_url ? (
+                      <img 
+                        src={issue.creator.avatar_url} 
+                        alt="" 
+                        style={{ width: '20px', height: '20px', borderRadius: '50%', border: '1px solid var(--accent-green)', marginRight: '0.5rem' }} 
+                      />
+                    ) : (
+                      <span className="repo-icon">👤</span>
+                    )}
+                    {issue.creator ? `Posted by ${issue.creator.name}` : `Issue #${issue.id}`}
                   </div>
                 </div>
               </Link>

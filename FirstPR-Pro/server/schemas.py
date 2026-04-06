@@ -4,6 +4,7 @@ from typing import List, Optional
 # ---- USER SCHEMAS ----
 class UserBase(BaseModel):
     name: str
+    avatar_url: Optional[str] = None
 
 class UserCreate(UserBase):
     pass
@@ -46,6 +47,7 @@ class MarketplaceIssueBase(BaseModel):
 
 class MarketplaceIssueCreate(MarketplaceIssueBase):
     creator_name: str # The user creating the issue
+    creator_avatar: Optional[str] = None
 
 class MarketplaceIssue(MarketplaceIssueBase):
     id: int

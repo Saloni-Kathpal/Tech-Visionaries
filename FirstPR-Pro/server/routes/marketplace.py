@@ -9,14 +9,24 @@ from database import get_db
 router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
 
 # Helper to get or create a mock user
-def get_or_create_user(db: Session, username: str):
-    user = db.query(models.User).filter(models.User.name == username).first()
-    if not user:
-        user = models.User(name=username)
-        db.add(user)
+def get_or_create_user(db: Session, username: str, avatar_url: str = None):
+    try:
+        user = db.query(models.User).filter(models.User.name == username).first()
+        if not user:
+            user = models.User(name=username, avatar_url=avatar_url)
+            db.add(user)
+        else:
+            # Update avatar if provider (for Github identity sync)
+            if avatar_url:
+                user.avatar_url = avatar_url
+        
         db.commit()
         db.refresh(user)
-    return user
+        return user
+    except Exception as e:
+        db.rollback()
+        print(f"USER_MOD_ERROR: {str(e)}")
+        raise e
 
 @router.get("/issues", response_model=List[schemas.MarketplaceIssue])
 def get_issues(difficulty: str = None, status: str = None, db: Session = Depends(get_db)):
@@ -29,20 +39,24 @@ def get_issues(difficulty: str = None, status: str = None, db: Session = Depends
 
 @router.post("/issues", response_model=schemas.MarketplaceIssue)
 def create_issue(issue: schemas.MarketplaceIssueCreate, db: Session = Depends(get_db)):
-    user = get_or_create_user(db, issue.creator_name)
-    
-    db_issue = models.MarketplaceIssue(
-        title=issue.title,
-        description=issue.description,
-        repo_link=issue.repo_link,
-        difficulty=issue.difficulty,
-        status="open",
-        created_by_id=user.id
-    )
-    db.add(db_issue)
-    db.commit()
-    db.refresh(db_issue)
-    return db_issue
+    try:
+        user = get_or_create_user(db, issue.creator_name, avatar_url=issue.creator_avatar)
+        
+        db_issue = models.MarketplaceIssue(
+            title=issue.title,
+            description=issue.description,
+            repo_link=issue.repo_link,
+            difficulty=issue.difficulty,
+            status="open",
+            created_by_id=user.id
+        )
+        db.add(db_issue)
+        db.commit()
+        db.refresh(db_issue)
+        return db_issue
+    except Exception as e:
+        print(f"CREATE_ISSUE_ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
 
 @router.get("/issues/{issue_id}", response_model=schemas.MarketplaceIssue)
 def get_issue(issue_id: int, db: Session = Depends(get_db)):
@@ -52,7 +66,7 @@ def get_issue(issue_id: int, db: Session = Depends(get_db)):
     return issue
 
 @router.post("/issues/{issue_id}/claim", response_model=schemas.MarketplaceIssue)
-def claim_issue(issue_id: int, username: str, db: Session = Depends(get_db)):
+def claim_issue(issue_id: int, username: str, avatar_url: str = None, db: Session = Depends(get_db)):
     issue = db.query(models.MarketplaceIssue).filter(models.MarketplaceIssue.id == issue_id).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
@@ -62,22 +76,22 @@ def claim_issue(issue_id: int, username: str, db: Session = Depends(get_db)):
     # Claiming sets status
     issue.status = "in-progress"
     
-    # Ensures user exists
-    get_or_create_user(db, username)
+    # Ensures user exists and avatar is updated
+    get_or_create_user(db, username, avatar_url=avatar_url)
     
     db.commit()
     db.refresh(issue)
     return issue
 
 @router.post("/issues/{issue_id}/submit", response_model=schemas.Submission)
-def submit_solution(issue_id: int, username: str, submission: schemas.SubmissionCreate, db: Session = Depends(get_db)):
+def submit_solution(issue_id: int, username: str, submission: schemas.SubmissionCreate, avatar_url: str = None, db: Session = Depends(get_db)):
     issue = db.query(models.MarketplaceIssue).filter(models.MarketplaceIssue.id == issue_id).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
     if issue.status != "in-progress":
         raise HTTPException(status_code=400, detail="Issue must be 'in-progress' to submit a solution")
     
-    user = get_or_create_user(db, username)
+    user = get_or_create_user(db, username, avatar_url=avatar_url)
     
     db_sub = models.Submission(
         issue_id=issue.id,

@@ -7,6 +7,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    avatar_url = Column(String, nullable=True)
     score = Column(Float, default=0.0)
     totalSolved = Column(Integer, default=0)
     avgRating = Column(Float, default=0.0)
