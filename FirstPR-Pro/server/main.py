@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import issues, marketplace, leaderboard
+from routes import issues, marketplace, leaderboard, scanner
 from database import engine
 import models
 
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(issues.router)
 app.include_router(marketplace.router)
 app.include_router(leaderboard.router)
+app.include_router(scanner.router)
 
 @app.get("/")
 def read_root():

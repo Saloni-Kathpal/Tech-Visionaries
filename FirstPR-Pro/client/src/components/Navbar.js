@@ -45,9 +45,10 @@ const Navbar = ({ onLaunch, isDashboard }) => {
                 </>
               ) : (
                 <>
-                  <li><Link to="/dashboard" style={{ textDecoration: 'none', color: 'var(--text)' }}>Scanner</Link></li>
+                  <li><Link to="/dashboard" style={{ textDecoration: 'none', color: 'var(--text)' }}>Find Issues</Link></li>
                   <li><Link to="/marketplace" style={{ textDecoration: 'none', color: 'var(--text)' }}>Marketplace</Link></li>
                   <li><Link to="/leaderboard" style={{ textDecoration: 'none', color: 'var(--text)' }}>Leaderboard</Link></li>
+                  <li><Link to="/scanner" style={{ textDecoration: 'none', color: 'var(--text)', fontWeight: 'bold', border: '1px solid var(--neon-pink)', padding: '4px 10px', borderRadius: '4px' }}>Repo Scanner</Link></li>
 
                   {user ? (
                     <li style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

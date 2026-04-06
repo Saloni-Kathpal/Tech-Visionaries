@@ -58,3 +58,20 @@ class MarketplaceIssue(MarketplaceIssueBase):
 
     class Config:
         orm_mode = True
+
+# ---- SCANNER SCHEMAS ----
+class RepoScanRequest(BaseModel):
+    url: str
+
+class BeginnerIssue(BaseModel):
+    title: str
+    description: str
+    difficulty: str
+
+class RepoAnalysisResult(BaseModel):
+    health_score: int
+    issues: List[str]
+    code_smells: List[str]
+    security_risks: List[str]
+    improvements: List[str]
+    beginner_friendly_issues: List[BeginnerIssue]

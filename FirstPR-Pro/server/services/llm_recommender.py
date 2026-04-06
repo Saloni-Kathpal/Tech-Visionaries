@@ -84,17 +84,18 @@ Return the response in clean JSON format like:
     return prompt.strip()
 
 def call_gemini(api_key, prompt):
-    print(f"DEBUG: Initializing GenAI Client with Key (len={len(api_key)})")
-    client = genai.Client(api_key=api_key)
-    print(f"DEBUG: Calling generate_content for model 'gemini-2.5-flash'...")
+    print(f"DEBUG: Calling Gemini 2.5 REST Proxy...")
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash", contents=prompt
-        )
-        print("DEBUG: Generation complete.")
-        return response.text
+        from services import ai_proxy
+        result = ai_proxy.call_gemini_rest(prompt, model="gemini-2.5-flash")
+        
+        if "error" in result:
+            print(f"DEBUG: REST Error: {result['error']}")
+            return None
+            
+        return result.get("text")
     except Exception as e:
-        print(f"DEBUG: GenAI Generation Error: {e}")
+        print(f"DEBUG: Proxy Exception: {e}")
         return None
 
 def call_ollama(ollama_url, prompt, model="llama3"):
@@ -166,6 +167,8 @@ def generate_ai_recommendations(skills, repos):
             if target_name in original_name.lower() or original_name.lower() in target_name:
                 matched_url = repo.get('url', repo.get('html_url', '#'))
                 item['name'] = original_name # restore original casing
+                item['title'] = original_name
+                item['repo'] = repo.get('repo', original_name)
                 break
                 
         item['url'] = matched_url

@@ -131,3 +131,76 @@ def fetch_github_issues(skills: str, level: str = "beginner"):
         print("Error fetching GitHub issues:", e)
         return []
 
+def parse_github_url(url: str):
+    """
+    Parses a GitHub repo URL and returns (owner, repo).
+    Handles:
+    - https://github.com/owner/repo
+    - https://github.com/owner/repo/
+    - git@github.com:owner/repo.git
+    """
+    url = url.strip().rstrip("/")
+    if url.endswith(".git"):
+        url = url[:-4]
+    
+    if "github.com/" in url:
+        parts = url.split("github.com/")[-1].split("/")
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+    elif "github.com:" in url:
+        parts = url.split("github.com:")[-1].split("/")
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+            
+    return None, None
+
+def get_repo_data(owner: str, repo: str):
+    """
+    Fetches README and basic file structure for analysis.
+    """
+    headers = {}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"token {GITHUB_TOKEN}"
+        
+    base_url = f"https://api.github.com/repos/{owner}/{repo}"
+    
+    # 1. Fetch README
+    readme_content = ""
+    try:
+        r = requests.get(f"{base_url}/readme", headers=headers, timeout=5)
+        if r.status_code == 200:
+            import base64
+            readme_content = base64.b64decode(r.json().get("content", "")).decode("utf-8", errors="ignore")
+    except Exception as e:
+        print(f"Error fetching README: {e}")
+        
+    # 2. Fetch File Tree (top level)
+    tree_str = ""
+    try:
+        r = requests.get(f"{base_url}/contents", headers=headers, timeout=5)
+        if r.status_code == 200:
+            items = r.json()
+            tree_str = "\n".join([f"- {item['name']} ({item['type']})" for item in items])
+    except Exception as e:
+        print(f"Error fetching tree: {e}")
+        
+    # 3. Identify Tech Stack from special files
+    tech_stack = []
+    try:
+        # Check for common manifests
+        manifests = ["package.json", "requirements.txt", "go.mod", "Cargo.toml", "pom.xml"]
+        for manifest in manifests:
+            r = requests.get(f"{base_url}/contents/{manifest}", headers=headers, timeout=5)
+            if r.status_code == 200:
+                tech_stack.append(manifest)
+    except Exception as e:
+        print(f"Error fetching manifests: {e}")
+
+    return {
+        "owner": owner,
+        "repo": repo,
+        "readme": readme_content[:5000],  # cap readme size
+        "file_tree": tree_str,
+        "tech_stack": tech_stack
+    }
+
