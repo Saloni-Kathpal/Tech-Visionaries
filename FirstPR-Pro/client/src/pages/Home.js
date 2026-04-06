@@ -60,6 +60,26 @@ const STEPS = [
   { icon: '🚀', title: 'Ship Your PR',   desc: 'Open the issue, fork the repo, and make your first real open source commit.' },
 ];
 
+/* ─── CJK safety filter (frontend fallback) ─── */
+const containsCJK = (text = '') => {
+  for (let i = 0; i < text.length; i++) {
+    const cp = text.codePointAt(i);
+    if (
+      (cp >= 0x2E80 && cp <= 0x2EFF) ||
+      (cp >= 0x3000 && cp <= 0x303F) ||
+      (cp >= 0x3040 && cp <= 0x309F) ||
+      (cp >= 0x30A0 && cp <= 0x30FF) ||
+      (cp >= 0x3400 && cp <= 0x4DBF) ||
+      (cp >= 0x4E00 && cp <= 0x9FFF) ||
+      (cp >= 0xAC00 && cp <= 0xD7AF) ||
+      (cp >= 0xF900 && cp <= 0xFAFF)
+    ) return true;
+  }
+  return false;
+};
+const isEnglishIssue = (issue) =>
+  !containsCJK(issue.title || '') && !containsCJK(issue.repo || '');
+
 /* ════════════════════════════════════════════ */
 
 const Home = () => {
@@ -86,7 +106,9 @@ const Home = () => {
       const res = await fetch(`http://localhost:8000/issues?skills=${encodeURIComponent(skills)}`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
-      setIssues(Array.isArray(data) ? data : []);
+      // Frontend safety filter: drop any CJK issues that slipped past the backend
+      const englishOnly = Array.isArray(data) ? data.filter(isEnglishIssue) : [];
+      setIssues(englishOnly);
     } catch (err) {
       setError(err.message);
       setIssues([]);
